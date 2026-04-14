@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    container_name: blessing-next
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://blessing:password@db:5432/blessing
+      - NEXTAUTH_SECRET=your-secret-key-change-this
+      - NEXTAUTH_URL=http://your-synology-ip:3000
+      - NEXT_PUBLIC_SOCKET_URL=http://your-synology-ip:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/public/uploads
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: blessing-postgres
+    environment:
+      - POSTGRES_USER=blessing
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=blessing
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blessing"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
