@@ -1,0 +1,145 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int              @id @default(autoincrement())
+  username              String           @unique
+  email                 String           @unique
+  password              String
+  affiliation           String?
+  points                Int              @default(0)
+  last_login_reward_date String?
+  created_at            DateTime         @default(now())
+  updated_at            DateTime         @updatedAt
+
+  posts                 Post[]
+  comments              Comment[]
+  likes                 Like[]
+  affiliationPosts      AffiliationPost[]
+
+  @@map("users")
+}
+
+enum PostTag {
+  technology
+  science
+  health
+  business
+  entertainment
+  news
+}
+
+model Post {
+  id         Int       @id @default(autoincrement())
+  title      String
+  content    String
+  tag        PostTag   @default(news)
+  images     String[]  @default([])
+  views      Int       @default(0)
+  created_at DateTime  @default(now())
+
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   Int
+
+  comments   Comment[]
+  likes      Like[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  content    String
+  created_at DateTime  @default(now())
+
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   Int
+
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     Int
+
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId   Int?
+  replies    Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Like {
+  id     Int  @id @default(autoincrement())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+model AnonymousPost {
+  id         Int                @id @default(autoincrement())
+  title      String
+  content    String
+  ipAddress  String
+  views      Int                @default(0)
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+
+  comments   AnonymousComment[]
+  likes      AnonymousLike[]
+
+  @@map("anonymous_posts")
+}
+
+model AnonymousComment {
+  id        String           @id @default(uuid())
+  content   String
+  ipAddress String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  post      AnonymousPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+
+  parent    AnonymousComment?  @relation("AnonymousCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  String?
+  replies   AnonymousComment[] @relation("AnonymousCommentReplies")
+
+  @@map("anonymous_comments")
+}
+
+model AnonymousLike {
+  id        Int           @id @default(autoincrement())
+  ipAddress String
+
+  post      AnonymousPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+
+  @@unique([postId, ipAddress])
+  @@map("anonymous_likes")
+}
+
+model AffiliationPost {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  affiliation String?
+  images      String[] @default([])
+  views       Int      @default(0)
+  created_at  DateTime @default(now())
+
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    Int
+
+  @@map("affiliation_posts")
+}
