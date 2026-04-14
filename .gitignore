@@ -12,6 +12,20 @@ out/
 .env.development
 .env.production
 
+# yarn
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+
+# npm
+package-lock.json
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
 # uploads
 public/uploads/*
 !public/uploads/.gitkeep
