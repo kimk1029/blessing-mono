@@ -25,6 +25,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# SSH 설치 및 root 로그인 허용
+RUN apk add --no-cache openssh \
+    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
 # 실행에 필요한 파일만 복사
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
@@ -33,6 +38,9 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-EXPOSE 3000
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["node", "dist/server.js"]
+EXPOSE 3000 22
+
+CMD ["/entrypoint.sh"]
